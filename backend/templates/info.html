@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Info</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0e0e0e;
+            --card: #161616;
+            --border: #2a2a2a;
+            --accent: #c8f135;
+            --text: #f0f0f0;
+            --muted: #666;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 0.4rem;
+        }
+
+        .card-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: -0.5px;
+        }
+
+        .card-subtitle {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-bottom: 2rem;
+        }
+
+        .back-link {
+            font-size: 0.75rem;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .back-link:hover { color: var(--accent); }
+
+        #submissions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .submission-item {
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            animation: slideIn 0.2s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .submission-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 1rem;
+            background: #1c1c1c;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .submission-id {
+            font-size: 0.7rem;
+            color: var(--accent);
+        }
+
+        .submission-count {
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+
+        .submission-body {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .field-row {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+        }
+
+        .field-key {
+            color: var(--muted);
+            min-width: 80px;
+        }
+
+        .field-value {
+            color: var(--text);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 0;
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .empty-state a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Данные</div>
+            <a href="/form" class="back-link">← форма</a>
+        </div>
+        <div id="submissions-list">
+            <div class="loading">загрузка...</div>
+        </div>
+    </div>
+
+    <script>
+        function renderSubmissions(submissions) {
+            const $list = $('#submissions-list');
+            $list.empty();
+
+            if (!submissions.length) {
+                $list.html('<div class="empty-state">нет записей — <a href="/form">добавить</a></div>');
+                return;
+            }
+
+            submissions.forEach(function (item) {
+                const fields = Object.entries(item.data)
+                    .map(([key, val]) => `
+                        <div class="field-row">
+                            <span class="field-key">${key}</span>
+                            <span class="field-value">${val}</span>
+                        </div>`)
+                    .join('');
+
+                const count = Object.keys(item.data).length;
+
+                $list.append(`
+                    <div class="submission-item">
+                        <div class="submission-header">
+                            <span class="submission-id">#${item.id}</span>
+                            <span class="submission-count">${count} field${count !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div class="submission-body">${fields}</div>
+                    </div>
+                `);
+            });
+        }
+
+        $.ajax({
+            url: '/data',
+            method: 'GET',
+            success: function (data) { renderSubmissions(data); },
+            error: function () {
+                $('#submissions-list').html('<div class="empty-state">ошибка загрузки данных</div>');
+            }
+        });
+    </script>
+</body>
+</html>
